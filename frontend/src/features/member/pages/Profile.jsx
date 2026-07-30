@@ -1,25 +1,38 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TextField from '../../../components/common/TextField';
 import { useBackNavigate } from '../../../hooks/useBackNavigate';
-
-// TODO(backend): GET -> memberService.getProfile()
-// TODO(backend): PUT -> memberService.updateProfile(payload) untuk field editable (Nama, Email, Kota, Gender)
-// TODO(backend): POST -> memberService.uploadAvatar(file) untuk tombol "Ubah Foto"
+import { getMemberProfile, updateMemberProfile } from '../../../services/memberService';
 
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 export default function Profile() {
   const goBack = useBackNavigate('/dashboard');
   const navigate = useNavigate();
-  const [form, setForm] = useState({
-    name: '',
-    email: '',
-    city: '',
-    gender: 'L',
-  });
-// TODO: useEffect -> memberService.getProfile().then(res => setForm(res.data))
+  const [form, setForm] = useState({ name: '', email: '', city: '', gender: 'L' });
+  const [lockedFields, setLockedFields] = useState({ phone: '-', dob: '-', store: '-' });
   const [dirty, setDirty] = useState(false);
+
+  useEffect(() => {
+    getMemberProfile()
+      .then((res) => {
+        if (res.success) {
+          const genderMap = { 1: 'L', 2: 'P' };
+          setForm({
+            name: res.data.name || '',
+            email: res.data.email || '',
+            city: res.data.city || '',
+            gender: genderMap[res.data.gender] || '', // '' = belum diisi, bukan default 'L'
+          });
+          setLockedFields({
+            phone: res.data.phone || '-',
+            dob: res.data.dateOfBirth ? new Date(res.data.dateOfBirth).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : '-',
+            store: res.data.storeCode || '-',
+          });
+        }
+      })
+      .catch((err) => console.error(err));
+  }, []);
 
   const update = (key) => (val) => {
     setForm((f) => ({ ...f, [key]: val }));
@@ -30,53 +43,58 @@ export default function Profile() {
 
   const handleSave = async () => {
     if (emailError) return;
-    // TODO(backend): await memberService.updateProfile(form)
-    setDirty(false);
+    try {
+      await updateMemberProfile({
+        name: form.name,
+        email: form.email,
+        city: form.city,
+        gender: form.gender === 'P' ? 2 : form.gender === 'L' ? 1 : null,
+      });
+      setDirty(false);
+    } catch (err) {
+      alert(err.message || 'Gagal menyimpan profil.');
+    }
   };
 
   return (
     <div className="min-h-screen bg-[#F7F9FB]">
-      {/* Header Gradient + Nav + Avatar */}
       <div className="bg-hero-gradient">
-  {/* Nav bar - tinggi 64px konsisten dengan BackHeader di halaman lain */}
-  <div className="h-16 flex items-center justify-between px-5">
-    <div className="flex items-center gap-4">
-      <button onClick={goBack} aria-label="Kembali">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2">
-          <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
-      <h1 className="text-white font-bold text-xl">Profil Saya</h1>
-    </div>
-    <button
-      onClick={handleSave}
-      disabled={!dirty || !!emailError}
-      className="font-extrabold text-base text-white disabled:opacity-50"
-    >
-      Simpan
-    </button>
-  </div>
+        <div className="h-16 flex items-center justify-between px-5">
+          <div className="flex items-center gap-4">
+            <button onClick={goBack} aria-label="Kembali">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2">
+                <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            <h1 className="text-white font-bold text-xl">Profil Saya</h1>
+          </div>
+          <button
+            onClick={handleSave}
+            disabled={!dirty || !!emailError}
+            className="font-extrabold text-base text-white disabled:opacity-50"
+          >
+            Simpan
+          </button>
+        </div>
 
-  {/* Avatar section - terpisah dari nav bar, padding sendiri */}
-  <div className="flex flex-col items-center px-5 pb-10">
-    <div className="relative w-[112px] h-[112px] rounded-full border-[3px] border-white/30 flex items-center justify-center">
-      <div className="w-[98px] h-[98px] rounded-full bg-[#E6E8EA] border-2 border-white shadow-elevated flex items-center justify-center text-[#545F73] overflow-hidden">
-        <span className="text-xs">IMG</span>
+        <div className="flex flex-col items-center px-5 pb-10">
+          <div className="relative w-[112px] h-[112px] rounded-full border-[3px] border-white/30 flex items-center justify-center">
+            <div className="w-[98px] h-[98px] rounded-full bg-[#E6E8EA] border-2 border-white shadow-elevated flex items-center justify-center text-[#545F73] overflow-hidden">
+              <span className="text-xs">IMG</span>
+            </div>
+            <button
+              className="absolute right-1 bottom-2.5 w-[25.5px] h-[26px] rounded-full bg-white shadow-elevated flex items-center justify-center"
+              aria-label="Ubah foto"
+            >
+              <svg width="13.5" height="13.5" viewBox="0 0 20 20" fill="#006A64">
+                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+              </svg>
+            </button>
+          </div>
+          <span className="mt-2 text-white text-base">Ubah Foto</span>
+        </div>
       </div>
-      <button
-        className="absolute right-1 bottom-2.5 w-[25.5px] h-[26px] rounded-full bg-white shadow-elevated flex items-center justify-center"
-        aria-label="Ubah foto"
-      >
-        <svg width="13.5" height="13.5" viewBox="0 0 20 20" fill="#006A64">
-          <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-        </svg>
-      </button>
-    </div>
-    <span className="mt-2 text-white text-base">Ubah Foto</span>
-  </div>
-</div>
 
-      {/* Form Card */}
       <main className="bg-[#F7F9FB] -mt-8 rounded-t-[32px] shadow-[0_-8px_24px_rgba(0,0,0,0.05)] px-[30px] pt-10 pb-6 flex flex-col gap-6">
         <TextField label="Nama Lengkap" value={form.name} onChange={update('name')} />
         <TextField label="Email" value={form.email} onChange={update('email')} error={emailError} />
@@ -111,6 +129,9 @@ export default function Profile() {
               </button>
             ))}
           </div>
+          {!form.gender && (
+            <span className="text-xs text-[#545F73]/50 italic">Belum diisi</span>
+          )}
         </div>
 
         <div className="flex justify-center pt-8 pb-2 border-t border-[#E0E3E5]/30 mt-2">
@@ -118,9 +139,9 @@ export default function Profile() {
         </div>
 
         {[
-          { label: 'Nomor HP', value: '+62 812 3456 7890' },
-          { label: 'Tanggal Lahir', value: '15 Agustus 1992' },
-          { label: 'Store Register', value: 'Grand Indonesia, Jakarta' },
+          { label: 'Nomor HP', value: lockedFields.phone },
+          { label: 'Tanggal Lahir', value: lockedFields.dob },
+          { label: 'Store Register', value: lockedFields.store },
         ].map((field) => (
           <div key={field.label} className="flex flex-col gap-1">
             <label className="text-xs font-bold tracking-wider uppercase text-[#545F73]/40">{field.label}</label>

@@ -1,8 +1,6 @@
-// src/App.jsx
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { AuthProvider } from './context/AuthContext';
-import ProtectedRoute from './routes/ProtectedRoute';
 import ScrollToTop from './utils/ScrollToTop';
 
 const LandingPage = lazy(() => import('./pages/LandingPage'));
@@ -21,14 +19,7 @@ export default function App() {
         <Suspense fallback={<Loading />}>
           <Routes>
             <Route path="/" element={<LandingPage />} />
-            <Route
-              path="/member/*"
-              element={
-                <ProtectedRoute allowedRoles={['member']}>
-                  <MemberRoutes />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/member/*" element={<MemberRoutes />} />
             <Route path="/admin/*" element={<AdminRoutes />} />
             <Route path="*" element={<h1>404 - Halaman tidak ditemukan</h1>} />
           </Routes>

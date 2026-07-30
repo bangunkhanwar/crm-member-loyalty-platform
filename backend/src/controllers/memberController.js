@@ -70,39 +70,56 @@ export const updateProfile = async (req, res) => {
   }
 };
 
-// Get Member Point History
+// Get Member Point History (dengan running balance akurat)
 export const getPointHistory = async (req, res) => {
   const memberCode = req.user.memberCode;
   const { month, year } = req.query;
 
   try {
-    let sql = `
-      SELECT "IdRec", "TransNumRef", "TransType", "Debit", "Credit", "Description", "CreateTime"
-      FROM points."Points"
-      WHERE "MemberCode" = $1
-    `;
-    const params = [memberCode];
+    // Ambil saldo terkini sebagai titik awal perhitungan mundur
+    const balanceRes = await query(
+      `SELECT COALESCE("TotalPoints", 0) AS "TotalPoints" FROM member."MemberPointsCurrently" WHERE "MemberCode" = $1`,
+      [memberCode]
+    );
+    const currentBalance = parseInt(balanceRes.rows[0]?.TotalPoints || 0);
 
-    if (month && year) {
-      sql += ` AND EXTRACT(MONTH FROM "CreateTime") = $2 AND EXTRACT(YEAR FROM "CreateTime") = $3`;
-      params.push(month, year);
-    }
+    // Ambil SEMUA transaksi terurut DESC (terbaru dulu) untuk hitung mundur saldo per baris
+    const allRes = await query(
+      `SELECT "IdRec", "TransNumRef", "TransType", "Debit", "Credit", "Description", "CreateTime"
+       FROM points."Points"
+       WHERE "MemberCode" = $1
+       ORDER BY "CreateTime" DESC, "IdRec" DESC`,
+      [memberCode]
+    );
 
-    sql += ` ORDER BY "CreateTime" DESC`;
+    let runningBalance = currentBalance;
+    const withBalance = allRes.rows.map((item) => {
+      const debit = parseInt(item.Debit || 0);
+      const credit = parseInt(item.Credit || 0);
+      const balanceAfter = runningBalance;
+      // mundur ke transaksi sebelumnya: balik efek transaksi ini
+      runningBalance = runningBalance - debit + credit;
+      return {
+        id: item.IdRec,
+        refNum: item.TransNumRef,
+        type: item.TransType === 1 ? 'IN' : item.TransType === 2 ? 'OUT' : 'ADJUSTMENT',
+        debit,
+        credit,
+        description: item.Description,
+        date: item.CreateTime,
+        balance: balanceAfter
+      };
+    });
 
-    const result = await query(sql, params);
+    // Filter bulan/tahun setelah balance dihitung (agar saldo tetap akurat meski difilter)
+    const filtered = (month && year)
+      ? withBalance.filter((t) => {
+          const d = new Date(t.date);
+          return (d.getMonth() + 1) === parseInt(month) && d.getFullYear() === parseInt(year);
+        })
+      : withBalance;
 
-    const history = result.rows.map(item => ({
-      id: item.IdRec,
-      refNum: item.TransNumRef,
-      type: item.TransType === 1 ? 'IN' : item.TransType === 2 ? 'OUT' : 'ADJUSTMENT',
-      debit: parseInt(item.Debit || 0),
-      credit: parseInt(item.Credit || 0),
-      description: item.Description,
-      date: item.CreateTime
-    }));
-
-    return res.json({ success: true, data: history });
+    return res.json({ success: true, data: filtered });
   } catch (err) {
     console.error('Error getPointHistory:', err);
     return res.status(500).json({ success: false, message: 'Gagal mengambil riwayat poin.' });

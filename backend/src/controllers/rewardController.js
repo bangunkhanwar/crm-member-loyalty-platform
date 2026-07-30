@@ -4,7 +4,7 @@ import { query } from '../config/db.js';
 export const getRewards = async (req, res) => {
   try {
     const result = await query(
-      `SELECT "GiftId", "GiftDescription", "GiftAmount", "PointQuantity", "Stock", "ImagePath", "ExpiryDays"
+      `SELECT "GiftId", "GiftDescription", "GiftAmount", "PointQuantity", "Stock", "ImagePath", "ExpiryDays", "Category"
        FROM points."PointGiftRedeemption"
        WHERE "isActive" = 1
        ORDER BY "PointQuantity" ASC`
@@ -17,7 +17,8 @@ export const getRewards = async (req, res) => {
       pointsNeeded: parseInt(r.PointQuantity),
       stock: parseInt(r.Stock || 0),
       image: r.ImagePath || 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=400',
-      expiryDays: r.ExpiryDays || 30
+      expiryDays: r.ExpiryDays || 30,
+      category: r.Category || 'Voucher'
     }));
 
     return res.json({ success: true, data: rewards });

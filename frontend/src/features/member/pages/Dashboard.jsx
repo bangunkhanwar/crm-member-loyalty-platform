@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import MemberHeader from '../../../layouts/MemberHeader';
@@ -8,20 +8,57 @@ import HeroBalanceCard from '../../../components/common/HeroBalanceCard';
 import RewardCard from '../../../components/common/RewardCard';
 import TransactionItem from '../../../components/common/TransactionItem';
 import Button from '../../../components/common/Button';
+import { getMemberProfile } from '../../../services/memberService';
+import { getRewards } from '../../../services/rewardService';
+import { getHistory } from '../../../services/pointService';
+import { mapReward } from '../../../utils/mapReward';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { logout } = useAuth();
-  const [member] = useState({});
-  const [rewards] = useState([]);
-  const [transactions] = useState([]);
+  const [member, setMember] = useState({});
+  const [rewards, setRewards] = useState([]);
+  const [transactions, setTransactions] = useState([]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
 
+  useEffect(() => {
+    getMemberProfile()
+      .then((res) => {
+        if (res.success) {
+          setMember({
+            name: res.data.name,
+            memberId: res.data.memberCode,
+            totalPoint: res.data.totalPoints,
+          });
+        }
+      })
+      .catch((err) => console.error(err));
+
+    getRewards()
+      .then((res) => { if (res.success) setRewards(res.data.slice(0, 6).map(mapReward)); })
+      .catch((err) => console.error(err));
+
+    getHistory()
+      .then((res) => {
+        if (res.success) {
+          const mapped = res.data.slice(0, 5).map((t) => ({
+            id: t.id,
+            date: new Date(t.date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }),
+            description: t.description,
+            pointChange: t.debit > 0 ? t.debit : -t.credit,
+            balance: t.balance,
+          }));
+          setTransactions(mapped);
+        }
+      })
+      .catch((err) => console.error(err));
+  }, []);
+
   const handleLogout = () => {
-    logout(); // hapus token & state auth
+    logout();
     setLogoutModalOpen(false);
-    navigate('/'); // kembali ke landing page
+    navigate('/');
   };
 
   return (

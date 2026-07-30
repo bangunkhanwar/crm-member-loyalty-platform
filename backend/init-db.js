@@ -24,9 +24,16 @@ async function initDatabase() {
 
     const sqlPath = path.join(__dirname, 'schema.sql');
     const sql = fs.readFileSync(sqlPath, 'utf8');
-
     console.log('⚡ Executing Database Schema Migration & Seeding...');
     await client.query(sql);
+
+    const migrationPath = path.join(__dirname, 'migrations', '001_add_reward_category_and_sequences.sql');
+    if (fs.existsSync(migrationPath)) {
+      const migrationSql = fs.readFileSync(migrationPath, 'utf8');
+      console.log('⚡ Executing Migration: reward category & member sequences...');
+      await client.query(migrationSql);
+    }
+
     console.log('✅ Database initialization completed successfully!');
   } catch (err) {
     console.error('❌ Error executing database initialization:', err);

@@ -1,20 +1,41 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BackHeader from '../../../layouts/BackHeader';
 import TransactionItem from '../../../components/common/TransactionItem';
-// TODO(backend): totalPoint dari memberService.getProfile(), history dari pointService.getRecentHistory({limit:3})
+import { getMemberProfile } from '../../../services/memberService';
+import { getHistory } from '../../../services/pointService';
 
 export default function PoinSaya() {
   const navigate = useNavigate();
-  const [totalPoint] = useState(0);         // TODO: ambil dari API/context
-  const [recentTransactions] = useState([]); // TODO: ambil dari API
+  const [totalPoint, setTotalPoint] = useState(0);
+  const [recentTransactions, setRecentTransactions] = useState([]);
+
+  useEffect(() => {
+    getMemberProfile()
+      .then((res) => { if (res.success) setTotalPoint(res.data.totalPoints || 0); })
+      .catch((err) => console.error(err));
+
+    getHistory()
+      .then((res) => {
+        if (res.success) {
+          const mapped = res.data.slice(0, 3).map((t) => ({
+            id: t.id,
+            date: new Date(t.date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }),
+            description: t.description,
+            pointChange: t.debit > 0 ? t.debit : -t.credit,
+            balance: t.balance,
+          }));
+          setRecentTransactions(mapped);
+        }
+      })
+      .catch((err) => console.error(err));
+  }, []);
 
   return (
     <div className="min-h-screen bg-white">
       <BackHeader title="Poin Saya" />
 
       <main className="px-5 pt-2 pb-10 flex flex-col gap-6">
-        {/* Hero: Saldo Poin Aktif */}
         <div className="bg-hero-gradient rounded-card-lg shadow-card p-10 flex flex-col items-center gap-2">
           <span className="text-white/80 text-base">Poin Aktif Saat Ini</span>
           <span className="text-white font-extrabold text-[42px] leading-[52px] tracking-[-1.05px]">
@@ -22,12 +43,10 @@ export default function PoinSaya() {
           </span>
           <div className="w-16 h-1.5 rounded-full bg-white/40 mt-2" />
           <div className="flex items-center gap-2 mt-4">
-            {/* Icon info kecil */}
             <span className="text-primary-muted text-[13px]">Terupdate secara real-time</span>
           </div>
         </div>
 
-        {/* Action Buttons */}
         <div className="flex gap-4">
           <button
             onClick={() => navigate('/member/reward')}
@@ -43,7 +62,6 @@ export default function PoinSaya() {
           </button>
         </div>
 
-        {/* Riwayat Poin (cuplikan 3 item terbaru) */}
         <section className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <h2 className="font-bold text-xl text-text-black">Riwayat Poin</h2>
@@ -56,9 +74,7 @@ export default function PoinSaya() {
           </div>
         </section>
 
-        {/* Promo Banner placeholder */}
         <div className="w-full h-32 rounded-card bg-slate/10 shadow-card flex items-end p-4">
-          {/* TODO(backend): ambil banner aktif dari rewardService/promoService, tampilkan gambar + judul promo */}
           <div className="text-white">
             <p className="text-sm">PROMO TERBATAS</p>
             <p className="text-sm font-medium">Double Poin di Akhir Pekan!</p>

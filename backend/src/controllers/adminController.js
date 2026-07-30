@@ -1,3 +1,4 @@
+import { generateMemberCode } from '../utils/generateMemberCode.js';
 import { query } from '../config/db.js';
 
 // 1. Dashboard KPI Metrics (Admin & Head Portal)
@@ -275,7 +276,6 @@ export const adjustMemberPoints = async (req, res) => {
 };
 
 // 5. Register Member Baru di Toko (Karyawan Toko / Admin Portal)
-// Register Member / Reseller / Agent Baru oleh Toko atau Admin
 export const registerNewMemberByStore = async (req, res) => {
   const { name, phone, email, storeCode, categoryCode = 'MEMBER' } = req.body;
   const operatorName = req.user.fullName || req.user.username;
@@ -287,23 +287,23 @@ export const registerNewMemberByStore = async (req, res) => {
   const formattedPhone = phone.trim().replace(/^\+62/, '0');
 
   try {
-    // Check Duplicate Phone
     const checkRes = await query(
       `SELECT "MemberCode" FROM member."Member" WHERE "Handpone" = $1`,
       [formattedPhone]
     );
-
     if (checkRes.rows.length > 0) {
       return res.status(400).json({ success: false, message: 'Nomor HP ini sudah terdaftar.' });
     }
 
-    // Generate MemberCode
-    const countRes = await query(`SELECT COUNT(*) FROM member."Member"`);
-    const nextNum = parseInt(countRes.rows[0].count) + 1;
-    const prefix = categoryCode === 'AGENT' ? 'AGN' : categoryCode === 'RESELLER' ? 'RSL' : 'MBR';
+    const seqMap = { MEMBER: 'member.member_seq', RESELLER: 'member.reseller_seq', AGENT: 'member.agent_seq' };
+    const prefixMap = { MEMBER: 'MBR', RESELLER: 'RSL', AGENT: 'AGN' };
+    const seqName = seqMap[categoryCode] || seqMap.MEMBER;
+    const prefix = prefixMap[categoryCode] || 'MBR';
+
+    const seqRes = await query(`SELECT nextval('${seqName}') AS next`);
+    const nextNum = parseInt(seqRes.rows[0].next);
     const memberCode = `${prefix}${String(nextNum).padStart(8, '0')}`;
 
-    // Insert to Database
     const insertRes = await query(
       `INSERT INTO member."Member" 
        ("MemberCode", "Handpone", "Name", "Email", "StoreCode", "CreatedBy", "MemberCategory", "TierMember")
@@ -312,7 +312,6 @@ export const registerNewMemberByStore = async (req, res) => {
       [memberCode, formattedPhone, name, email || '', storeCode || req.user.storeCode || 'STR01', operatorName, categoryCode]
     );
 
-    // Initial Balance
     await query(
       `INSERT INTO member."MemberPointsCurrently" ("MemberCode", "TotalPoints") VALUES ($1, 0)
        ON CONFLICT ("MemberCode") DO NOTHING`,

@@ -1,13 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import BackHeader from '../../../layouts/BackHeader';
 import MonthYearFilter from '../../../components/common/MonthYearFilter';
 import TransactionItem from '../../../components/common/TransactionItem';
-// TODO(backend): ganti mockTransactions -> pointService.getHistory({ month, year })
-// PRD F05: filter berdasarkan Bulan & Tahun
+import { getHistory } from '../../../services/pointService';
 
 function groupByMonth(transactions) {
-  // TODO(backend): idealnya grouping ini dilakukan di response API, bukan di frontend,
-  // supaya konsisten saat data sudah besar / dipaginasi
   return transactions.reduce((groups, t) => {
     const [, month, year] = t.date.split(' ');
     const key = `${month} ${year}`;
@@ -20,7 +17,25 @@ function groupByMonth(transactions) {
 export default function RiwayatPoin() {
   const [month, setMonth] = useState(null);
   const [year, setYear] = useState(null);
-  const [transactions] = useState([]);
+  const [transactions, setTransactions] = useState([]);
+
+  useEffect(() => {
+    getHistory({ month, year })
+      .then((res) => {
+        if (res.success) {
+          const mapped = res.data.map((t) => ({
+            id: t.id,
+            date: new Date(t.date).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }),
+            description: t.description,
+            pointChange: t.debit > 0 ? t.debit : -t.credit,
+            balance: t.balance,
+          }));
+          setTransactions(mapped);
+        }
+      })
+      .catch((err) => console.error(err));
+  }, [month, year]);
+
   const grouped = useMemo(() => groupByMonth(transactions), [transactions]);
 
   return (
@@ -53,7 +68,6 @@ export default function RiwayatPoin() {
           <p className="text-center text-text-muted py-10">Belum ada riwayat transaksi.</p>
         )}
 
-        {/* TODO(backend): ganti jadi pagination/infinite-scroll ke pointService.getHistory */}
         <div className="flex flex-col items-center gap-4 py-8">
           <p className="text-text-muted text-sm">Menampilkan {transactions.length} transaksi</p>
         </div>
