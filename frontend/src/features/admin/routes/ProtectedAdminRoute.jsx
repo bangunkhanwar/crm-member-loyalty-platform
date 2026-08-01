@@ -1,9 +1,11 @@
 import { Navigate } from 'react-router-dom';
-import { getCurrentAdminUser } from '../../../services/AdminAuthService';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function ProtectedAdminRoute({ children }) {
-  const admin = getCurrentAdminUser();
-  if (!admin) {
+  const { auth, loading } = useAuth();
+
+  if (loading) return null; // ⬅️ tunggu context siap
+  if (!auth || auth.role !== 'admin') {
     return <Navigate to="/admin/login" replace />;
   }
   return children;

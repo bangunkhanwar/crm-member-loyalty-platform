@@ -24,7 +24,6 @@ export default function RewardPromo() {
       <BackHeader title="Reward & Promo" />
 
       <main className="px-5 pt-6 flex flex-col gap-4">
-        <h1 className="font-bold text-xl text-primary">Reward & Promo</h1>
 
         <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
           {CATEGORIES.map((cat) => (

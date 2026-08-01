@@ -1,10 +1,12 @@
 // AddMemberDrawer.jsx
 import { useState } from 'react';
 import { registerNewMember } from '../../services/adminMemberService';
+import { useLockBodyScroll } from '../../hooks/useLockBodyScroll';
 
 export default function AddMemberDrawer({ open, onClose }) {
   const [form, setForm] = useState({ name: '', email: '', phone: '', idNumber: '', gender: 'L', city: '', tier: 'Silver', initialBalance: 0, store: '', categoryCode: 'MEMBER' });
   const [submitting, setSubmitting] = useState(false);
+  useLockBodyScroll(open);
   if (!open) return null;
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -18,7 +20,15 @@ export default function AddMemberDrawer({ open, onClose }) {
     setSubmitting(true);
     try {
       const fullPhone = form.phone.startsWith('0') ? form.phone : `0${form.phone}`;
-      const res = await registerNewMember(form.name, fullPhone, form.email, 'STR01', form.categoryCode);
+      const res = await registerNewMember(
+        form.name,
+        fullPhone,
+        form.email,
+        'STR01',
+        form.categoryCode,
+        form.tier,
+        Number(form.initialBalance) || 0
+      );
       alert(res.message || `Berhasil mendaftarkan ${form.categoryCode}!`);
       onClose();
       window.location.reload();
@@ -58,9 +68,9 @@ export default function AddMemberDrawer({ open, onClose }) {
                 <option value="AGENT">Agent (Mitra Diskon Max 30%)</option>
               </select>
             </div>
-            <FieldInput label="Nama Lengkap" value={form.name} onChange={set('name')} placeholder="Contoh: Ahmad Subagja" />
+            <FieldInput label="Nama Lengkap" value={form.name} onChange={set('name')} placeholder="Masukan Nama Lengkap" />
             <div className="flex gap-6">
-              <FieldInput label="Email" value={form.email} onChange={set('email')} placeholder="ahmad@email.com" />
+              <FieldInput label="Email" value={form.email} onChange={set('email')} placeholder="Masukan Email" />
               <div className="flex-1 flex flex-col gap-2">
                 <label className="text-xs font-medium text-admin-text">Phone Number</label>
                 <div className="flex h-[46px]">
@@ -102,7 +112,7 @@ export default function AddMemberDrawer({ open, onClose }) {
               <div className="flex-1 flex flex-col gap-2">
                 <label className="text-xs font-medium text-admin-text">Membership Tier</label>
                 <select value={form.tier} onChange={set('tier')} className="h-[46px] px-4 border border-border rounded-xl outline-none text-sm">
-                  <option>Silver (Default)</option><option>Gold</option><option>Blue</option>
+                  <option>Silver</option><option>Gold</option><option>Platinum</option>
                 </select>
               </div>
               <div className="flex-1 flex flex-col gap-2">

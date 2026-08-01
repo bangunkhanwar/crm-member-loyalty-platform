@@ -1,5 +1,5 @@
 // src/pages/LandingPage.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom'; 
 import { Gift, Star, Crown, Camera, Music } from "lucide-react";
 import RegisterModal from '../components/RegisterModal';
@@ -43,6 +43,22 @@ export default function LandingPage() {
   const [showRegister, setShowRegister] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [openFaq, setOpenFaq] = useState(null);
+
+  // BACK TO TOP
+  const [showTop, setShowTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowTop(window.scrollY > 300);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <div className="relative w-full font-['Plus_Jakarta_Sans']">
@@ -107,7 +123,7 @@ export default function LandingPage() {
               Jadi Member Elzatta & Dauky Belanja Lebih Untung Setiap Hari
             </h1>
             <p className="max-w-[560px] text-base lg:text-lg leading-7 text-[#3E4947]">
-              Nikmati pengalaman belanja eksklusif dengan diskon hingga 30%, poin reward melimpah, dan akses perdana ke koleksi hijab terbaru kami.
+              Nikmati pengalaman belanja eksklusif dengan diskon hingga 30%, poin reward melimpah, dan akses awal ke koleksi fashion muslim terbaru.
             </p>
             <div className="flex flex-wrap gap-4">
               <button onClick={() => setShowRegister(true)} className="rounded-full bg-[#2DA299] px-8 py-4 font-bold text-white shadow-lg">
@@ -284,6 +300,15 @@ export default function LandingPage() {
         open={showRegister}
         onClose={() => setShowRegister(false)}
       />
+      {/* BACK TO TOP */}
+      {showTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-6 right-6 z-50 bg-[#2DA299] hover:bg-[#24877f] text-white w-14 h-14 flex items-center justify-center rounded-full shadow-lg transition"
+        >
+          ↑
+        </button>
+      )}
     </div>
   );
 }

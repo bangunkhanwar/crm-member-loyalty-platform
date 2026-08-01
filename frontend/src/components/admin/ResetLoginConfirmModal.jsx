@@ -1,4 +1,8 @@
+import { useLockBodyScroll } from '../../hooks/useLockBodyScroll';
+
+
 export default function ResetLoginConfirmModal({ open, member, onClose, onConfirm }) {
+  useLockBodyScroll(open);
   if (!open) return null;
 
   const handleConfirm = async () => {

@@ -19,6 +19,7 @@ export default function Dashboard() {
   const [member, setMember] = useState({});
   const [rewards, setRewards] = useState([]);
   const [transactions, setTransactions] = useState([]);
+  const [totalTransactions, setTotalTransactions] = useState(0);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
 
@@ -39,26 +40,33 @@ export default function Dashboard() {
       .then((res) => { if (res.success) setRewards(res.data.slice(0, 6).map(mapReward)); })
       .catch((err) => console.error(err));
 
-    getHistory()
+    getHistory({ limit: 3 })
       .then((res) => {
         if (res.success) {
-          const mapped = res.data.slice(0, 5).map((t) => ({
+          setTotalTransactions(res.total);
+
+          const mapped = res.data.map((t) => ({
             id: t.id,
-            date: new Date(t.date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }),
+            date: new Date(t.date).toLocaleDateString('id-ID', {
+              day: '2-digit',
+              month: 'short',
+              year: 'numeric'
+            }),
             description: t.description,
             pointChange: t.debit > 0 ? t.debit : -t.credit,
             balance: t.balance,
           }));
+
           setTransactions(mapped);
         }
       })
       .catch((err) => console.error(err));
-  }, []);
+    }, []);
 
   const handleLogout = () => {
     logout();
     setLogoutModalOpen(false);
-    navigate('/');
+    navigate('/', { replace: true });
   };
 
   return (
@@ -85,6 +93,11 @@ export default function Dashboard() {
           <div className="flex flex-col gap-3">
             {transactions.map((t) => <TransactionItem key={t.id} transaction={t} />)}
           </div>
+          {totalTransactions > 3 && (
+            <p className="text-sm text-admin-text text-center">
+              Menampilkan {transactions.length} dari {totalTransactions} transaksi.
+            </p>
+          )}
           <Button onClick={() => navigate('/member/riwayat')}>Lihat Semua Riwayat</Button>
         </section>
       </main>

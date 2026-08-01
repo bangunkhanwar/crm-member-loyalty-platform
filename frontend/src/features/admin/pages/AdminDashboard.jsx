@@ -35,25 +35,28 @@ export default function AdminDashboard() {
 
   return (
     <AdminLayout>
-      <div className="flex justify-between items-center px-9 pl-5">
-        <h2 className="font-bold text-[32px] text-text-black">Dashboard</h2>
-        <div className="flex gap-2.5 items-center">
+      <div className="flex flex-col gap-3 lg:flex-row lg:justify-between lg:items-center px-4 md:px-9 md:pl-5 pt-4 lg:pt-6">
+        <h2 className="font-bold text-2xl md:text-[32px] text-text-black">Dashboard</h2>
+        <div className="flex gap-2 items-center overflow-x-auto pb-1 lg:pb-0">
           {['01 Juli - 21 Juli', 'Monthly', 'Wilayah (Semua)', 'Toko (Semua)'].map((f) => (
-            <button key={f} className="flex items-center px-3 py-1 rounded-xl gap-1 font-bold text-xs text-admin-text">
+            <button
+              key={f}
+              className="flex shrink-0 items-center px-3 py-1.5 rounded-xl gap-1 font-bold text-xs text-admin-text bg-white border border-black/20"
+            >
               {f} <i className="fas fa-chevron-down text-[10px]" />
             </button>
           ))}
-          <button className="flex items-center px-3 py-1 rounded-xl gap-1 font-bold text-xs text-admin-text">
+          <button className="flex shrink-0 items-center px-3 py-1.5 rounded-xl gap-1 font-bold text-xs text-admin-text bg-white border border-black/20">
             <i className="fas fa-filter" /> Filter
           </button>
-          <button className="flex items-center px-3 py-1 rounded-xl gap-1 font-bold text-xs text-admin-text">
+          <button className="flex shrink-0 items-center px-3 py-1.5 rounded-xl gap-1 font-bold text-xs text-white bg-secondary">
             <i className="fas fa-download" /> Export
           </button>
         </div>
       </div>
 
-      <div className="p-8 flex flex-col gap-6">
-        <div className="flex gap-6">
+      <div className="p-4 md:p-6 lg:p-8 flex flex-col gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           <KpiCard
             icon="fa-users"
             title="TOTAL MEMBER"
@@ -85,7 +88,7 @@ export default function AdminDashboard() {
           />
         </div>
 
-        <div className="flex gap-6">
+        <div className="flex flex-col lg:flex-row gap-6">
           <SegmentDonutChart total={segmentasi.total} breakdown={segmentasi.breakdown} />
           <AgeBarChart data={ageDistribution} />
         </div>

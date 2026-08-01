@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import logoImg from '../assets/elcorps.png';
 
 const CORE_NAV = [
   { label: 'Beranda', path: '/member/dashboard' },
@@ -26,8 +27,9 @@ export default function MemberDrawer({ open, onClose, member, onLogoutClick }) {
       <aside className="relative w-[85%] max-w-[330px] h-full bg-bg-page shadow-elevated flex flex-col justify-between">
         <div className="flex flex-col">
           {/* Header drawer */}
-          <div className="h-16 flex items-center px-5 bg-white">
-            <span className="font-bold text-primary text-base">Elcorps Member</span>
+          <div className="h-16 flex items-center gap-2 px-5 bg-white">
+            <img src={logoImg} alt="Elcorps" className="h-8 w-auto object-contain" />
+            <span className="font-bold mt-2 text-primary text-base">Member</span>
           </div>
 
           {/* Zone 1: Profile & Core nav */}

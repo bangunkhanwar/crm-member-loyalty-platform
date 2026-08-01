@@ -174,6 +174,63 @@ export const getMemberDetail = async (req, res) => {
   }
 };
 
+// 3b. Update Member Detail (dari EditMemberDrawer)
+export const updateMemberDetail = async (req, res) => {
+  const { memberCode } = req.params;
+  const { name, email, phone, city } = req.body;
+  const operatorId = req.user.idMsOperator;
+  const operatorName = req.user.fullName || req.user.username;
+
+  if (!name) {
+    return res.status(400).json({ success: false, message: 'Nama wajib diisi.' });
+  }
+
+  try {
+    const existing = await query(`SELECT * FROM member."Member" WHERE "MemberCode" = $1`, [memberCode]);
+    if (existing.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Member tidak ditemukan.' });
+    }
+
+    if (phone) {
+      const formattedPhone = phone.trim().replace(/^\+62/, '0');
+      const dupCheck = await query(
+        `SELECT "MemberCode" FROM member."Member" WHERE "Handpone" = $1 AND "MemberCode" != $2`,
+        [formattedPhone, memberCode]
+      );
+      if (dupCheck.rows.length > 0) {
+        return res.status(400).json({ success: false, message: 'Nomor HP sudah terdaftar pada member lain.' });
+      }
+    }
+
+    const updateRes = await query(
+      `UPDATE member."Member"
+       SET "Name" = $1,
+           "Email" = COALESCE($2, "Email"),
+           "Handpone" = COALESCE($3, "Handpone"),
+           "City" = COALESCE($4, "City"),
+           "LastUpdate" = CURRENT_TIMESTAMP
+       WHERE "MemberCode" = $5
+       RETURNING *`,
+      [name, email, phone ? phone.trim().replace(/^\+62/, '0') : null, city, memberCode]
+    );
+
+    await query(
+      `INSERT INTO admpanel."trActionLog" ("fidMsOperator", "FormCaller", "Message")
+       VALUES ($1, 'EditMemberDrawer', $2)`,
+      [operatorId, `${operatorName} memperbarui data member ${memberCode}.`]
+    );
+
+    return res.json({
+      success: true,
+      message: 'Data member berhasil diperbarui.',
+      data: updateRes.rows[0]
+    });
+  } catch (err) {
+    console.error('Error updateMemberDetail:', err);
+    return res.status(500).json({ success: false, message: 'Gagal memperbarui data member.' });
+  }
+};
+
 // 4. Point Adjustment (PRD Section 5.3.A03 - Wajib Alasan & Nominal)
 export const adjustMemberPoints = async (req, res) => {
   const { memberCode, type, nominal, reason } = req.body;
@@ -277,8 +334,13 @@ export const adjustMemberPoints = async (req, res) => {
 
 // 5. Register Member Baru di Toko (Karyawan Toko / Admin Portal)
 export const registerNewMemberByStore = async (req, res) => {
-  const { name, phone, email, storeCode, categoryCode = 'MEMBER' } = req.body;
+  const { name, phone, email, storeCode, categoryCode = 'MEMBER', tierMember, initialBalance } = req.body;
   const operatorName = req.user.fullName || req.user.username;
+
+  const ALLOWED_TIERS = ['SILVER', 'GOLD', 'PLATINUM'];
+  const finalTier = (tierMember && ALLOWED_TIERS.includes(tierMember.toUpperCase()))
+    ? tierMember.toUpperCase()
+    : 'SILVER';
 
   if (!name || !phone) {
     return res.status(400).json({ success: false, message: 'Nama dan Nomor HP wajib diisi.' });
@@ -306,17 +368,35 @@ export const registerNewMemberByStore = async (req, res) => {
 
     const insertRes = await query(
       `INSERT INTO member."Member" 
-       ("MemberCode", "Handpone", "Name", "Email", "StoreCode", "CreatedBy", "MemberCategory", "TierMember")
-       VALUES ($1, $2, $3, $4, $5, $6, $7, 'SILVER')
-       RETURNING *`,
-      [memberCode, formattedPhone, name, email || '', storeCode || req.user.storeCode || 'STR01', operatorName, categoryCode]
+      ("MemberCode", "Handpone", "Name", "Email", "StoreCode", "CreatedBy", "MemberCategory", "TierMember")
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING *`,
+      [memberCode, formattedPhone, name, email || '', storeCode || req.user.storeCode || 'STR01', operatorName, categoryCode, finalTier]
     );
 
-    await query(
-      `INSERT INTO member."MemberPointsCurrently" ("MemberCode", "TotalPoints") VALUES ($1, 0)
-       ON CONFLICT ("MemberCode") DO NOTHING`,
-      [memberCode]
-    );
+    // Proses initial balance
+    const balance = parseInt(initialBalance) || 0;
+    if (balance > 0) {
+      // Insert/update saldo awal
+      await query(
+        `INSERT INTO member."MemberPointsCurrently" ("MemberCode", "TotalPoints") VALUES ($1, $2)
+         ON CONFLICT ("MemberCode") DO UPDATE SET "TotalPoints" = $2, "LastUpdate" = CURRENT_TIMESTAMP`,
+        [memberCode, balance]
+      );
+
+      // Catat transaksi awal
+      await query(
+        `INSERT INTO points."Points" ("MemberCode", "TransNumRef", "TransType", "Debit", "Description", "CreateBy")
+         VALUES ($1, $2, 1, $3, $4, $5)`,
+        [memberCode, `INIT${Date.now()}`, balance, 'Initial Balance (dari admin)', operatorName]
+      );
+    } else {
+      await query(
+        `INSERT INTO member."MemberPointsCurrently" ("MemberCode", "TotalPoints") VALUES ($1, 0)
+         ON CONFLICT ("MemberCode") DO NOTHING`,
+        [memberCode]
+      );
+    }
 
     return res.json({
       success: true,

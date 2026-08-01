@@ -1,8 +1,9 @@
 import { useState } from 'react';
+import { useLockBodyScroll } from '../../hooks/useLockBodyScroll';
 
 export default function ImportDataModal({ open, onClose }) {
   const [error, setError] = useState(null); // TODO(backend): set dari response validasi upload
-
+  useLockBodyScroll(open);
   if (!open) return null;
 
   const handleFileChange = async (e) => {

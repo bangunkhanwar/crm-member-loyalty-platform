@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { adjustPoints } from '../../services/adminMemberService';
+import { useLockBodyScroll } from '../../hooks/useLockBodyScroll';
 
 export default function PointAdjustmentModal({ open, member, onClose }) {
   const [mode, setMode] = useState('add'); // 'add' | 'subtract'
   const [amount, setAmount] = useState('');
   const [reason, setReason] = useState('');
   const [note, setNote] = useState('');
-
+  useLockBodyScroll(open);
   if (!open) return null;
 
   const amountNum = Number(amount) || 0;

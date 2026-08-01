@@ -1,11 +1,11 @@
 import { useBackNavigate } from '../hooks/useBackNavigate';
 
-export default function BackHeader({ title, variant = 'light', fallbackPath = '/dashboard' }) {
+export default function BackHeader({ title, variant = 'light', fallbackPath = '/member/dashboard' }) {
   const goBack = useBackNavigate(fallbackPath);
   const isDark = variant === 'dark';
 
-  return (
-    <header className={`h-16 flex items-center gap-4 px-5 ${isDark ? '' : 'bg-white'}`}>
+   return (
+    <header className={`h-16 flex items-center gap-4 px-5 sticky top-0 z-20 ${isDark ? 'bg-primary' : 'bg-white'} shadow-sm`}>
       <button onClick={goBack} aria-label="Kembali">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
           <path d="M10 13L5 8L10 3" stroke={isDark ? '#FFFFFF' : '#006A64'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />

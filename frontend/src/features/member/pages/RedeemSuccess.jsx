@@ -6,7 +6,7 @@ export default function RedeemSuccess() {
   const reward = state?.reward;
 
   if (!reward) {
-    navigate('/reward', { replace: true });
+    navigate('/member/reward', { replace: true });
     return null;
   }
 
@@ -50,13 +50,13 @@ export default function RedeemSuccess() {
 
         <div className="w-full flex flex-col gap-4">
           <button
-            onClick={() => navigate('/riwayat')}
+            onClick={() => navigate('/member/riwayat')}
             className="h-14 rounded-xl bg-secondary text-white font-bold text-base shadow-elevated"
           >
             Lihat Voucher Saya
           </button>
           <button
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate('/member/dashboard')}
             className="h-12 rounded-xl text-primary font-bold text-base"
           >
             Kembali ke Beranda

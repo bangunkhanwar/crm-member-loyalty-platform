@@ -7,7 +7,7 @@ export default function RewardCard({ reward, variant = 'carousel' }) {
 
   return (
     <div
-      onClick={() => navigate(`/reward/${reward.id}`)}
+      onClick={() => navigate(`/member/reward/${reward.id}`)}
       className={`cursor-pointer shrink-0 bg-white border border-primary/50 shadow-card rounded-card overflow-hidden
         ${isGrid ? 'w-full' : 'w-[280px]'}`}
     >

@@ -48,6 +48,7 @@ export default function MemberDetail() {
 
   // Bangun objek member untuk tampilan, semua properti dari API atau default
   const m = {
+    memberCode: memberData?.memberCode || '',
     name: memberData?.name || '',
     memberId: memberData?.memberCode || '',
     email: memberData?.email || '',
@@ -112,11 +113,11 @@ export default function MemberDetail() {
             </div>
           </div>
           <div className="flex gap-4 pb-2">
-            <button onClick={() => setShowReset(true)} className="flex items-center gap-2 px-6 h-[46px] rounded-full border border-border text-sm font-semibold text-admin-navy">
-              <i className="fas fa-sync-alt text-xs" /> Reset Login
+            <button onClick={() => setShowEdit(true)} className="flex items-center gap-2 px-6 h-[46px] rounded-full border border-border text-sm font-semibold text-admin-navy">
+              <i className="fas fa-pen text-xs" /> Edit Profile
             </button>
-            <button onClick={() => setShowEdit(true)} className="flex items-center gap-2 px-8 h-[46px] rounded-full bg-secondary text-white text-sm font-bold">
-              <i className="fas fa-pen text-xs" /> Ubah Data
+            <button onClick={() => setShowAdjust(true)} className="flex items-center gap-2 px-8 h-[46px] rounded-full bg-secondary text-white text-sm font-bold">
+              <i className="fas fa-plus text-xs" /> Adjust Points
             </button>
           </div>
         </div>

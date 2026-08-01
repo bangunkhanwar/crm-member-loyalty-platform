@@ -16,6 +16,19 @@ export async function adjustPoints(memberCode, type, nominal, reason) {
   return await adminApi.post('/admin/adjust-points', { memberCode, type, nominal, reason });
 }
 
-export async function registerNewMember(name, phone, email, storeCode) {
-  return await adminApi.post('/admin/register-member', { name, phone, email, storeCode });
+export async function registerNewMember(name, phone, email, storeCode, categoryCode = 'MEMBER', tierMember = 'Silver', initialBalance = 0) {
+  return await adminApi.post('/admin/register-member', { name, phone, email, storeCode, categoryCode, tierMember, initialBalance });
+}
+
+export async function updateMember(memberCode, data) {
+  return await adminApi.put(`/admin/members/${memberCode}`, data);
+}
+
+export async function getHistory({ month, year, limit } = {}) {
+  const params = {};
+  if (month) params.month = month;
+  if (year) params.year = year;
+  if (limit) params.limit = limit;
+
+  return await memberApi.get('/member/points/history', { params });
 }

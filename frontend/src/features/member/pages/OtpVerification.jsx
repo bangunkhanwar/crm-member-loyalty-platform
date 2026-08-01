@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import Button from '../../../components/common/Button';
 import OTPInput from '../../../components/common/OTPInput';
 import { verifyOTP, resendOTP } from '../../../services/authService';
+import { useAuth } from '../../../context/AuthContext';
 // TODO(backend): ganti dengan authService.verifyOTP(phone, code) & authService.resendOTP(phone)
 
 const OTP_DURATION = 5 * 60; // 5 menit sesuai PRD F01
@@ -11,7 +12,7 @@ export default function OtpVerification() {
   const { state } = useLocation();
   const phone = state?.phone ?? '';
   const navigate = useNavigate();
-
+  const { login } = useAuth();
   const [otp, setOtp] = useState('');
   const [secondsLeft, setSecondsLeft] = useState(OTP_DURATION);
   const [attempts, setAttempts] = useState(0); // maksimal 3 kali percobaan (PRD F01)
@@ -29,8 +30,13 @@ export default function OtpVerification() {
   const handleVerify = async () => {
     if (otp.length < 4 || isExpired) return;
     try {
-      await verifyOTP(phone, otp);
-      navigate('/dashboard');
+      const data = await verifyOTP(phone, otp);
+      login({
+        token: data.token,
+        role: 'member',
+        user: data.member,
+      });
+      navigate('/member/dashboard', { replace: true });
     } catch (err) {
       console.error(err);
     }

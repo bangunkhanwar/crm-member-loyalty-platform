@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext(null);
-const STORAGE_KEY = 'elcorps_auth';
+const STORAGE_KEY = 'elcorps_admin_auth';
 
 // role -> home route setelah login
 export const ROLE_HOME = {

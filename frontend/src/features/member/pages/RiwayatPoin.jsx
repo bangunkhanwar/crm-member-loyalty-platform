@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import BackHeader from '../../../layouts/BackHeader';
-import MonthYearFilter from '../../../components/common/MonthYearFilter';
+import DateRangeFilter from '../../../components/common/DateRangeFilter';
 import TransactionItem from '../../../components/common/TransactionItem';
 import { getHistory } from '../../../services/pointService';
 
@@ -15,12 +15,14 @@ function groupByMonth(transactions) {
 }
 
 export default function RiwayatPoin() {
-  const [month, setMonth] = useState(null);
-  const [year, setYear] = useState(null);
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
   const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getHistory({ month, year })
+    setLoading(true);
+    getHistory({ startDate, endDate })
       .then((res) => {
         if (res.success) {
           const mapped = res.data.map((t) => ({
@@ -33,44 +35,48 @@ export default function RiwayatPoin() {
           setTransactions(mapped);
         }
       })
-      .catch((err) => console.error(err));
-  }, [month, year]);
+      .catch((err) => console.error(err))
+      .finally(() => setLoading(false));
+  }, [startDate, endDate]);
 
   const grouped = useMemo(() => groupByMonth(transactions), [transactions]);
 
   return (
     <div className="min-h-screen bg-bg-alt">
       <BackHeader title="Riwayat Poin" />
-      <div className="px-5 py-4 bg-white">
-        <h1 className="font-bold text-xl text-primary">Riwayat Poin</h1>
-      </div>
 
-      <MonthYearFilter
-        month={month}
-        year={year}
-        onMonthClick={() => {/* buka dropdown pilih bulan */}}
-        onYearClick={() => {/* buka dropdown pilih tahun */}}
+      <DateRangeFilter
+        startDate={startDate}
+        endDate={endDate}
+        onStartDateChange={setStartDate}
+        onEndDateChange={setEndDate}
       />
 
-      <main className="px-5 py-5 flex flex-col gap-4">
-        {Object.entries(grouped).map(([groupLabel, items]) => (
+      <main className="max-w-2xl mx-auto px-5 sm:px-8 py-5 flex flex-col gap-4">
+        {!loading && (
+          <p className="text-text-muted text-sm text-center sm:text-left">
+            Menampilkan {transactions.length} transaksi
+          </p>
+        )}
+
+        {loading && (
+          <p className="text-center text-text-muted py-10">Memuat riwayat...</p>
+        )}
+
+        {!loading && Object.entries(grouped).map(([groupLabel, items]) => (
           <section key={groupLabel} className="flex flex-col gap-2">
             <h2 className="px-1 text-xs font-bold text-text-muted tracking-wider uppercase">
               {groupLabel}
             </h2>
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3 sm:grid sm:grid-cols-2 sm:gap-4">
               {items.map((t) => <TransactionItem key={t.id} transaction={t} />)}
             </div>
           </section>
         ))}
 
-        {Object.keys(grouped).length === 0 && (
+        {!loading && Object.keys(grouped).length === 0 && (
           <p className="text-center text-text-muted py-10">Belum ada riwayat transaksi.</p>
         )}
-
-        <div className="flex flex-col items-center gap-4 py-8">
-          <p className="text-text-muted text-sm">Menampilkan {transactions.length} transaksi</p>
-        </div>
       </main>
     </div>
   );

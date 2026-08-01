@@ -3,7 +3,7 @@ const SHADOW_COLOR = { gold: '#FFCC00', teal: '#00C8B3', red: '#FF2D55' };
 export default function KpiCard({ icon, title, value, growthLabel, growthColor, footerLabel, footerValue, footerValueColor, accent }) {
   return (
     <div
-      className="flex-1 bg-white rounded-2xl p-6 flex flex-col justify-between min-h-[200px]"
+      className="flex-1 bg-white rounded-2xl p-6 flex flex-col justify-between min-h-[200px] border border-[rgba(0,0,0,0.2)]"
       style={{ boxShadow: `0px -3px 4px ${SHADOW_COLOR[accent]}` }}
     >
       <div className="flex items-center gap-2.5">

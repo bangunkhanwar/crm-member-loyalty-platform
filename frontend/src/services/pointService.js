@@ -1,9 +1,10 @@
 import { memberApi } from './api';
 
-export async function getHistory({ month, year } = {}) {
+export async function getHistory({ startDate, endDate, limit } = {}) {
   const params = {};
-  if (month) params.month = month;
-  if (year) params.year = year;
+  if (startDate) params.startDate = startDate;
+  if (endDate) params.endDate = endDate;
+  if (limit) params.limit = limit;
   return await memberApi.get('/member/points/history', { params });
 }
 

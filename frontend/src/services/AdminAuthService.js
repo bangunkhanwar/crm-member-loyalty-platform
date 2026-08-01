@@ -3,10 +3,7 @@ import { adminApi } from './api';
 export async function loginAdmin({ username, phone, password }) {
   const payload = phone ? { phone, password } : { username, password };
   const response = await adminApi.post('/auth/operator-login', payload);
-  if (response.token) {
-    localStorage.setItem('adminToken', response.token);
-    localStorage.setItem('adminUser', JSON.stringify(response.user));
-  }
+  // response sudah berisi { success, token, user } dari backend
   return response;
 }
 

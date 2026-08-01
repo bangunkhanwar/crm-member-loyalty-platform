@@ -71,19 +71,18 @@ export const updateProfile = async (req, res) => {
 };
 
 // Get Member Point History (dengan running balance akurat)
+// Get Member Point History (dengan running balance akurat)
 export const getPointHistory = async (req, res) => {
   const memberCode = req.user.memberCode;
-  const { month, year } = req.query;
+  const { startDate, endDate, limit } = req.query;
 
   try {
-    // Ambil saldo terkini sebagai titik awal perhitungan mundur
     const balanceRes = await query(
       `SELECT COALESCE("TotalPoints", 0) AS "TotalPoints" FROM member."MemberPointsCurrently" WHERE "MemberCode" = $1`,
       [memberCode]
     );
     const currentBalance = parseInt(balanceRes.rows[0]?.TotalPoints || 0);
 
-    // Ambil SEMUA transaksi terurut DESC (terbaru dulu) untuk hitung mundur saldo per baris
     const allRes = await query(
       `SELECT "IdRec", "TransNumRef", "TransType", "Debit", "Credit", "Description", "CreateTime"
        FROM points."Points"
@@ -97,8 +96,8 @@ export const getPointHistory = async (req, res) => {
       const debit = parseInt(item.Debit || 0);
       const credit = parseInt(item.Credit || 0);
       const balanceAfter = runningBalance;
-      // mundur ke transaksi sebelumnya: balik efek transaksi ini
       runningBalance = runningBalance - debit + credit;
+
       return {
         id: item.IdRec,
         refNum: item.TransNumRef,
@@ -111,15 +110,23 @@ export const getPointHistory = async (req, res) => {
       };
     });
 
-    // Filter bulan/tahun setelah balance dihitung (agar saldo tetap akurat meski difilter)
-    const filtered = (month && year)
+    // Filter rentang tanggal, inklusif, boleh isi salah satu saja (startDate atau endDate)
+    const start = startDate ? new Date(`${startDate}T00:00:00`) : null;
+    const end = endDate ? new Date(`${endDate}T23:59:59.999`) : null;
+
+    const filtered = (start || end)
       ? withBalance.filter((t) => {
           const d = new Date(t.date);
-          return (d.getMonth() + 1) === parseInt(month) && d.getFullYear() === parseInt(year);
+          if (start && d < start) return false;
+          if (end && d > end) return false;
+          return true;
         })
       : withBalance;
 
-    return res.json({ success: true, data: filtered });
+    const total = filtered.length;
+    const limited = limit ? filtered.slice(0, parseInt(limit)) : filtered;
+
+    return res.json({ success: true, data: limited, total });
   } catch (err) {
     console.error('Error getPointHistory:', err);
     return res.status(500).json({ success: false, message: 'Gagal mengambil riwayat poin.' });

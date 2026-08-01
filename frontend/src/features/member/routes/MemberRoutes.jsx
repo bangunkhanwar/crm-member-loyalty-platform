@@ -8,12 +8,14 @@ import Profile from '../pages/Profile';
 import PoinSaya from '../pages/PoinSaya';
 import DetailPromo from '../pages/DetailPromo';
 import RedeemSuccess from '../pages/RedeemSuccess';
+import OtpVerification from '../pages/OtpVerification';
 
 export default function MemberRoutes() {
   return (
     <Routes>
       {/* Publik — tidak boleh dibungkus proteksi */}
       <Route path="/login" element={<Login />} />
+      <Route path="/otp-verification" element={<OtpVerification />} />
 
       {/* Global Protected Route — seluruh halaman member terkunci di sini */}
       <Route element={<MemberLayout />}>
