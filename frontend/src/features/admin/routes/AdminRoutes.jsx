@@ -4,6 +4,7 @@ import AdminDashboard from '../pages/AdminDashboard';
 import ProtectedAdminRoute from './ProtectedAdminRoute';
 import MemberManagement from '../pages/MemberManagement';
 import MemberDetail from '../pages/MemberDetail';
+import RewardManagement from '../pages/RewardManagement';
 
 export default function AdminRoutes() {
   return (
@@ -31,6 +32,14 @@ export default function AdminRoutes() {
         element={
           <ProtectedAdminRoute>
             <MemberDetail />
+          </ProtectedAdminRoute>
+        }
+      />
+      <Route
+        path="rewards"
+        element={
+          <ProtectedAdminRoute>
+            <RewardManagement />
           </ProtectedAdminRoute>
         }
       />

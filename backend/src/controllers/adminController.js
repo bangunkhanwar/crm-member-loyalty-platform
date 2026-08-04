@@ -4,19 +4,109 @@ import { query } from '../config/db.js';
 // 1. Dashboard KPI Metrics (Admin & Head Portal)
 export const getDashboardKPIs = async (req, res) => {
   try {
+    const { startDate, endDate, city, storeCode } = req.query;
+    const effectiveStoreCode =
+      req.user.role === 'TOKO' ? req.user.storeCode : storeCode;
+
+    const locationConditions = [];
+    const locationParams = [];
+
+    if (city) {
+      locationParams.push(city);
+      locationConditions.push(`m."City" = $${locationParams.length}`);
+    }
+
+    if (effectiveStoreCode) {
+      locationParams.push(effectiveStoreCode);
+      locationConditions.push(`m."StoreCode" = $${locationParams.length}`);
+    }
+
+    const locationWhere = locationConditions.length
+      ? `WHERE ${locationConditions.join(' AND ')}`
+      : ''; 
+    
     // Total Members
-    const totalMemberRes = await query(`SELECT COUNT(*) FROM member."Member"`);
+    const totalMemberRes = await query(
+      `SELECT COUNT(*) FROM member."Member" m ${locationWhere}`,
+      locationParams
+    );
     const totalMembers = parseInt(totalMemberRes.rows[0].count);
 
     // Active Members (isActive = 1)
-    const activeMemberRes = await query(`SELECT COUNT(*) FROM member."Member" WHERE "isActive" = 1`);
+    const activeMemberRes = await query(
+      `SELECT COUNT(*)
+      FROM member."Member" m
+      ${locationWhere ? `${locationWhere} AND` : 'WHERE'} m."isActive" = 1`,
+      locationParams
+    );
     const activeMembers = parseInt(activeMemberRes.rows[0].count);
+    const newMemberConditions = [...locationConditions];
+    const newMemberParams = [...locationParams];
+
+    if (startDate) {
+      newMemberParams.push(startDate);
+      newMemberConditions.push(
+        `m."RegistrationDate" >= $${newMemberParams.length}::date`
+      );
+    }
+
+    if (endDate) {
+      newMemberParams.push(endDate);
+      newMemberConditions.push(
+        `m."RegistrationDate" < ($${newMemberParams.length}::date + INTERVAL '1 day')`
+      );
+    }
+
+    const newMemberWhere = newMemberConditions.length
+      ? `WHERE ${newMemberConditions.join(' AND ')}`
+      : '';
+
+    const newMemberRes = await query(
+      `SELECT COUNT(*) FROM member."Member" m ${newMemberWhere}`,
+      newMemberParams
+    );
+
+    const newMembers = parseInt(newMemberRes.rows[0].count, 10);
 
     // Total Points Redeemed
+    const redeemedConditions = ['p."TransType" = 2'];
+    const redeemedParams = [];
+
+    if (city) {
+      redeemedParams.push(city);
+      redeemedConditions.push(`m."City" = $${redeemedParams.length}`);
+    }
+
+    if (effectiveStoreCode) {
+      redeemedParams.push(effectiveStoreCode);
+      redeemedConditions.push(`m."StoreCode" = $${redeemedParams.length}`);
+    }
+
+    if (startDate) {
+      redeemedParams.push(startDate);
+      redeemedConditions.push(
+        `p."CreateTime" >= $${redeemedParams.length}::date`
+      );
+    }
+
+    if (endDate) {
+      redeemedParams.push(endDate);
+      redeemedConditions.push(
+        `p."CreateTime" < ($${redeemedParams.length}::date + INTERVAL '1 day')`
+      );
+    }
+
     const redeemedRes = await query(
-      `SELECT COALESCE(SUM("Credit"), 0) AS total_redeemed FROM points."Points" WHERE "TransType" = 2`
+      `SELECT COALESCE(SUM(p."Credit"), 0) AS total_redeemed
+      FROM points."Points" p
+      INNER JOIN member."Member" m ON m."MemberCode" = p."MemberCode"
+      WHERE ${redeemedConditions.join(' AND ')}`,
+      redeemedParams
     );
-    const totalPointsRedeemed = parseInt(redeemedRes.rows[0].total_redeemed);
+    const totalPointsRedeemed = parseInt(
+      redeemedRes.rows[0].total_redeemed,
+      10
+    );
 
     // Total Points Earned
     const earnedRes = await query(
@@ -47,6 +137,7 @@ export const getDashboardKPIs = async (req, res) => {
       data: {
         totalMembers,
         activeMembers,
+        newMembers,
         totalPointsRedeemed,
         totalPointsEarned,
         redemptionRate: `${redemptionRate}%`,

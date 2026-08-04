@@ -99,9 +99,17 @@ export const redeemReward = async (req, res) => {
 
     await query(
       `INSERT INTO voucher."Voucher" 
-       ("VoucherId", "MemberCode", "PromoCode", "Title", "VoucherAmount", "ExpiryDate", "UniqueCode", "fidVoucherStatus")
-       VALUES ($1, $2, 'REDEEM', $3, $4, $5, $6, 1)`,
-      [voucherId, memberCode, gift.GiftDescription, gift.GiftAmount, expiryDate, uniqueCode]
+       ("VoucherId", "MemberCode", "GiftId", "PromoCode", "Title", "VoucherAmount", "ExpiryDate", "UniqueCode", "fidVoucherStatus")
+       VALUES ($1, $2, $3, 'REDEEM', $4, $5, $6, $7, 1)`,
+      [
+        voucherId,
+        memberCode,
+        gift.GiftId,
+        gift.GiftDescription,
+        gift.GiftAmount,
+        expiryDate,
+        uniqueCode,
+      ]
     );
 
     return res.json({

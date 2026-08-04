@@ -1,4 +1,9 @@
-const SHADOW_COLOR = { gold: '#FFCC00', teal: '#00C8B3', red: '#FF2D55' };
+const SHADOW_COLOR = {
+  gold: '#FFCC00',
+  teal: '#00C8B3',
+  red: '#FF2D55',
+  blue: '#3B82F6',
+};
 
 export default function KpiCard({ icon, title, value, growthLabel, growthColor, footerLabel, footerValue, footerValueColor, accent }) {
   return (

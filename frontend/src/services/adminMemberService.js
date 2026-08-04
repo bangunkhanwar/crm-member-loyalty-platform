@@ -1,7 +1,7 @@
 import { adminApi } from './api';
 
-export async function getDashboardKPIs() {
-  return await adminApi.get('/admin/dashboard-kpi');
+export async function getDashboardKPIs(filters = {}) {
+  return await adminApi.get('/admin/dashboard-kpi', { params: filters });
 }
 
 export async function getMemberList(search = '', storeCode = '') {
@@ -22,13 +22,4 @@ export async function registerNewMember(name, phone, email, storeCode, categoryC
 
 export async function updateMember(memberCode, data) {
   return await adminApi.put(`/admin/members/${memberCode}`, data);
-}
-
-export async function getHistory({ month, year, limit } = {}) {
-  const params = {};
-  if (month) params.month = month;
-  if (year) params.year = year;
-  if (limit) params.limit = limit;
-
-  return await memberApi.get('/member/points/history', { params });
 }

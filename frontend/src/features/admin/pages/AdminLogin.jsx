@@ -218,7 +218,7 @@ export default function AdminLogin() {
                   </Link>
                 </form>
 
-                {/* Secondary Links */}
+                {/* Secondary Links
                 <div className="flex flex-col items-center pt-5 w-full">
                   <p className="text-[15px] leading-[22px] text-[#94A3B8] text-center">
                     Atau belum punya akun?{' '}
@@ -229,7 +229,7 @@ export default function AdminLogin() {
                       Daftar Sekarang
                     </button>
                   </p>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>

@@ -3,15 +3,14 @@ import { useAuth } from '../context/AuthContext';
 import logo from '../assets/elcorps.png';
 
 const NAV_ITEMS = [
-  { section: 'General', items: [
+  { section: '', items: [
     { label: 'Dashboard', icon: 'fa-chart-pie', path: '/admin/dashboard' },
     { label: 'Member Management', icon: 'fa-users', path: '/admin/members' },
     { label: 'History Point Adjustment', icon: 'fa-edit', path: '/admin/point-adjustment' },
-    { label: 'Reward Inventory', icon: 'fa-gift', path: '/admin/rewards' },
+    { label: 'Reward Management', icon: 'fa-gift', path: '/admin/rewards' },
   ]},
   { section: 'Support', items: [
     { label: 'Setting', icon: 'fa-cog', path: '/admin/settings' },
-    { label: 'Pusat Bantuan', icon: 'fa-question-circle', path: '/admin/help' },
   ]},
 ];
 

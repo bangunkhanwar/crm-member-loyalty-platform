@@ -10,6 +10,7 @@ CREATE SCHEMA IF NOT EXISTS points;
 CREATE SCHEMA IF NOT EXISTS voucher;
 CREATE SCHEMA IF NOT EXISTS promo;
 CREATE SCHEMA IF NOT EXISTS message;
+CREATE SEQUENCE IF NOT EXISTS member.member_code_seq;
 
 -- 2. Master Store (Public)
 CREATE TABLE IF NOT EXISTS public."msStore" (
@@ -154,7 +155,8 @@ CREATE TABLE IF NOT EXISTS points."PointGiftRedeemption" (
     "Stock" INT DEFAULT 100,
     "isActive" SMALLINT DEFAULT 1,
     "ImagePath" TEXT,
-    "ExpiryDays" INT DEFAULT 30
+    "ExpiryDays" INT DEFAULT 30,
+    "Category" VARCHAR(30) DEFAULT 'Voucher'
 );
 
 -- 11. Point Adjustment Audit Log
@@ -179,7 +181,8 @@ CREATE TABLE IF NOT EXISTS voucher."Voucher" (
     "UniqueCode" VARCHAR(20) UNIQUE NOT NULL,
     "fidVoucherStatus" SMALLINT DEFAULT 1, -- 1: Active, 2: Used, 3: Expired
     "CreatedDate" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    "UsedDate" TIMESTAMP
+    "UsedDate" TIMESTAMP,
+    "GiftId" INT REFERENCES points."PointGiftRedeemption"("GiftId") ON DELETE SET NULL
 );
 
 -- 13. Voucher Categories
@@ -277,6 +280,14 @@ VALUES
 ('MBR00000001', '081299998888', 'Budi Santoso', 'budi@example.com', 1, '1995-05-15', 'Jakarta', 'STR01', 'GOLD', 'REF123', '123456'),
 ('MBR00000002', '081277776666', 'Siti Rahma', 'siti@example.com', 2, '1998-08-20', 'Bandung', 'STR02', 'SILVER', 'REF456', '123456')
 ON CONFLICT ("MemberCode") DO NOTHING;
+SELECT setval(
+  'member.member_code_seq',
+  COALESCE(
+    (SELECT MAX(RIGHT("MemberCode", 8)::BIGINT) FROM member."Member"),
+    0
+  ),
+  true
+);
 
 INSERT INTO member."MemberPointsCurrently" ("MemberCode", "TotalPoints", "LastUpdate")
 VALUES 
